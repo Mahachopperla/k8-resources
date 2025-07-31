@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  selector:
+    purpose: service-demo
+    project: roboshop
+    environment: dev
+  ports:
+    - protocol: TCP
+      port: 80 # this is source(service) port
+      targetPort: 80 # container port # as currently we are using nginx iamge and nginx opens port 80 by default
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    purpose: service-demo
+    project: roboshop
+    environment: dev
+spec:
+  containers:
+    - name: nginx
+      image:  nginx
