@@ -1,0 +1,68 @@
+#pv - k8 resource, which is a physical representation of volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ebs-static
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 20Gi
+  csi:
+    driver: ebs.csi.aws.com
+    fsType: ext4
+    volumeHandle: vol-0f2944b6969a107c0
+---
+#pvc - it's a claming resource of storage(pv)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-static-claim
+spec:
+  storageClassName: "" # Empty string must be explicitly set otherwise default StorageClass will be set
+  volumeName: ebs-static
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 15Gi # out of total pv storage capacity how much you want to claim for your pod. you need to specify here.
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ebs-static
+  labels:
+    purpose: ebs-static-demo
+    project: roboshop
+spec:
+  # we should restrict our pod to run on specific node which is in same location of volume.
+  #because ebs volume should be attached to node which is in same avail zone
+  #we can restrict it using nodeSelector
+  nodeSelector:
+    topology.kubernetes.io/zone:  us-east-1b
+  containers:
+  - name: nginx
+    image: nginx
+    # mounting created volume to specified nginx path
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /usr/share/nginx/html
+  # defining the claimed volume
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: ebs-static-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ebs-static-service
+spec:
+  type: LoadBalancer
+  selector:
+    purpose: ebs-static-demo
+    project: roboshop
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
