@@ -1,0 +1,54 @@
+# as we know storage class creates pv also along with ebs volume
+# so in dynamic provisioning we can directly claim the storage that we require and create pod & then service to access pod from browser
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-dynamic-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: roboshop-ebs
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ebs-dynamic
+  labels:
+    purpose: ebs-dynamic-demo
+    project: roboshop
+spec:
+  # we should restrict our pod to run on specific node which is in same location of volume.
+  #because ebs volume should be attached to node which is in same avail zone
+  #we can restrict it using nodeSelector
+  nodeSelector:
+    topology.kubernetes.io/zone:  us-east-1b
+  containers:
+  - name: nginx
+    image: nginx
+    # mounting created volume to specified nginx path
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /usr/share/nginx/html
+  # defining the claimed volume
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: ebs-dynamic-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ebs-dynamic-service
+spec:
+  type: LoadBalancer
+  selector:
+    purpose: ebs-dynamic-demo
+    project: roboshop
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

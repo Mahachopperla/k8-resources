@@ -1,0 +1,8 @@
+#storage calss helps to dynamically create ebs volume in aws and also creates a physical representation(pv) of it in kuberantes
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: roboshop-ebs
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
