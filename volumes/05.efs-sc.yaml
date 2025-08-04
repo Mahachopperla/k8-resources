@@ -1,0 +1,39 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-dynamic-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap # it will create access points automatically
+  fileSystemId: fs-0f9308868e7638124
+  directoryPerms: "700"
+  basePath: "/roboshop" 
+
+#EBS storage class creates volume automatically 
+# where as EFS storage class will not create filesystem automatically
+# filesystem should be created manually in EFS, access points  and pv will be created automatically
+# 📘 EFS Access Point – Simplified
+
+# 🔸 EFS = Shared storage (like a common cupboard)
+# 🔸 Access Point = A specific folder inside EFS (like a drawer)
+
+# 🛠️ Why Access Points?
+# - Each pod gets its own folder
+# - Starts from a clean path (not root /)
+# - Provides isolation
+# - Auto-created when PVC is made using EFS StorageClass
+
+# 📦 How It Works:
+# 1. You create a PVC using EFS StorageClass
+# 2. EFS CSI Driver creates:
+#    - Access Point in EFS
+#    - Persistent Volume (PV)
+# 3. Pod mounts storage via the Access Point
+
+# ✅ Result:
+# - Pod sees only its assigned directory
+# - One EFS file system can serve many pods safely
+
+# 💡 Note:
+# EFS StorageClass does NOT create the file system,
+# it only creates Access Points and PVs dynamically.
